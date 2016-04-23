@@ -1,6 +1,7 @@
 import argparse
 import cookielib
 import urllib2
+import zlib
 
 
 class NoRedirection(urllib2.HTTPErrorProcessor):
@@ -32,14 +33,15 @@ class ArgHandler(argparse.Action):
         opener.addheaders = [
             ('User-Agent', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:43.0) Gecko/20100101 Firefox/43.0'),
             ('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'),
-            ('Accept-Language', 'en-US,en;q=0.5'), ]
+            ('Accept-Language', 'en-US,en;q=0.5'),
+            ('Accept-Encoding', 'gzip, deflate'),]
         # extract source_id from main page
         print '--------Extracting event source id------------'
         event_location_req = opener.open(url)
         event_location = event_location_req.info().getheader('Location')
         for user in namespace.users:
             event_content_req = opener.open(event_location)
-            event_content = event_content_req.read()
+            event_content = zlib.decompress(event_content_req.read(), 16+zlib.MAX_WBITS)
             source_id_index = event_content.index("source_id")
             source_id = event_content[source_id_index + 18:source_id_index + 50]
             quantity_id_index = event_content.index("show_ticket_selection")
